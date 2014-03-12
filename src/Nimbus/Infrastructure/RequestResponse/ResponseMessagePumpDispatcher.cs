@@ -2,16 +2,19 @@
 using System.Threading.Tasks;
 using Microsoft.ServiceBus.Messaging;
 using Nimbus.Extensions;
+using Nimbus.Hooks;
 
 namespace Nimbus.Infrastructure.RequestResponse
 {
     internal class ResponseMessagePumpDispatcher : IMessageDispatcher
     {
         private readonly RequestResponseCorrelator _requestResponseCorrelator;
+        private readonly IHookProvider _hookProvider;
 
-        public ResponseMessagePumpDispatcher(RequestResponseCorrelator requestResponseCorrelator)
+        public ResponseMessagePumpDispatcher(RequestResponseCorrelator requestResponseCorrelator, IHookProvider hookProvider)
         {
             _requestResponseCorrelator = requestResponseCorrelator;
+            _hookProvider = hookProvider;
         }
 
         public async Task Dispatch(BrokeredMessage message)
@@ -25,6 +28,7 @@ namespace Nimbus.Infrastructure.RequestResponse
             {
                 var responseType = responseCorrelationWrapper.ResponseType;
                 var response = message.GetBody(responseType);
+                response = _hookProvider.Filters.ApplyToIncoming(message, response);
                 responseCorrelationWrapper.Reply(response);
             }
             else

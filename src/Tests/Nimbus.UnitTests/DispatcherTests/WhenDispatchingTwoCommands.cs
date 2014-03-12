@@ -3,10 +3,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.ServiceBus.Messaging;
 using Nimbus.HandlerFactories;
+using Nimbus.Hooks;
 using Nimbus.Infrastructure.Commands;
 using Nimbus.UnitTests.DispatcherTests.Handlers;
 using Nimbus.UnitTests.DispatcherTests.MessageContracts;
 using Nimbus.UnitTests.MessageBrokerTests.TestInfrastructure;
+using NSubstitute;
 using NUnit.Framework;
 using Shouldly;
 
@@ -24,7 +26,8 @@ namespace Nimbus.UnitTests.DispatcherTests
         {
             await base.Given(context);
 
-            _commandDispatcher = new CommandMessageDispatcher(Subject, typeof (FooCommand));
+            var hookProvider = Substitute.For<IHookProvider>();
+            _commandDispatcher = new CommandMessageDispatcher(Subject, typeof (FooCommand), hookProvider);
         }
 
         protected override async Task When()

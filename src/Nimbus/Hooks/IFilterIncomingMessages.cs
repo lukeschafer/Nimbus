@@ -2,7 +2,7 @@
 
 namespace Nimbus.Hooks
 {
-    public interface IFilterIncomingMessages
+    public interface IFilterIncomingMessages : IFilter
     {
         T FilterIn<T>(BrokeredMessage brokeredMessage, T originalMessage);
     }

@@ -83,6 +83,7 @@
     <Compile Include="BatchSendingTests\WhenPublishingACollectionOfEvents.cs" />
     <Compile Include="BatchSendingTests\WhenPublishingACollectionOfEventsViaTheBusEventSender.cs" />
     <Compile Include="BatchSendingTests\WhenSendingACollectionOfCommandsViaTheCommandSender.cs" />
+    <Compile Include="ConfigurationTests\WhenConfiguringMessageFilters.cs" />
     <Compile Include="ConfigurationTests\WhenLookingForClosedTypesOfAnOpenGeneric.cs" />
     <Compile Include="ConfigurationTests\WhenScanningAssembliesForHandledCommandTypes.cs" />
     <Compile Include="Conventions\AllBusBuilderConfigurationExtensionMethods.cs" />
@@ -99,6 +100,12 @@
     <Compile Include="DispatcherTests\Handlers\BrokerTestCommandHandler.cs" />
     <Compile Include="DispatcherTests\MessageContracts\FooCommand.cs" />
     <Compile Include="DispatcherTests\WhenDispatchingTwoCommands.cs" />
+    <Compile Include="HookTests\Filters\WhenApplyingMultipleIncomingFilters.cs" />
+    <Compile Include="HookTests\Filters\WhenApplyingMultipleOutgoingFiltersAfterConversion.cs" />
+    <Compile Include="HookTests\Filters\WhenApplyingMultipleOutgoingFiltersBeforeConversion.cs" />
+    <Compile Include="HookTests\Filters\WhenApplyingIncomingFiltersWithNoFiltersRegistered.cs" />
+    <Compile Include="HookTests\Filters\WhenApplyingOutgoingFiltersBeforeConversionWithNoFiltersRegistered.cs" />
+    <Compile Include="HookTests\Filters\WhenApplyingOutgoingFiltersAfterConversionWithNoFiltersRegistered.cs" />
     <Compile Include="InfrastructureTests\MessageContracts\MyCommand.cs" />
     <Compile Include="InfrastructureTests\MessageContracts\MyEscapingTestMessages.cs" />
     <Compile Include="InfrastructureTests\PathFactoryTests.cs" />

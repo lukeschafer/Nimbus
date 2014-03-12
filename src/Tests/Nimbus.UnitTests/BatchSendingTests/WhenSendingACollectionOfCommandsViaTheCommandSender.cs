@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
 using Nimbus.Configuration.Settings;
+using Nimbus.Hooks;
 using Nimbus.Infrastructure;
 using Nimbus.Infrastructure.Commands;
 using Nimbus.Infrastructure.MessageSendersAndReceivers;
@@ -21,13 +22,14 @@ namespace Nimbus.UnitTests.BatchSendingTests
         {
             _nimbusMessageSender = Substitute.For<INimbusMessageSender>();
 
+            var hookProvider = Substitute.For<IHookProvider>();
             var messagingFactory = Substitute.For<INimbusMessagingFactory>();
             messagingFactory.GetQueueSender(Arg.Any<string>()).Returns(ci => _nimbusMessageSender);
 
             var clock = new SystemClock();
             var validCommandTypes = new CommandTypesSetting {Value = new[] {typeof (FooCommand), typeof (BarCommand), typeof (BazCommand)}};
 
-            var busCommandSender = new BusCommandSender(messagingFactory, clock, validCommandTypes);
+            var busCommandSender = new BusCommandSender(messagingFactory, clock, validCommandTypes, hookProvider);
             return Task.FromResult(busCommandSender);
         }
 

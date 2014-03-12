@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.ServiceBus.Messaging;
 using Nimbus.Configuration.Settings;
 using Nimbus.Extensions;
+using Nimbus.Hooks;
 using Nimbus.MessageContracts.Exceptions;
 
 namespace Nimbus.Infrastructure.Commands
@@ -12,12 +13,14 @@ namespace Nimbus.Infrastructure.Commands
     {
         private readonly INimbusMessagingFactory _messagingFactory;
         private readonly IClock _clock;
+        private readonly IHookProvider _hookProvider;
         private readonly HashSet<Type> _validCommandTypes;
 
-        public BusCommandSender(INimbusMessagingFactory messagingFactory, IClock clock, CommandTypesSetting validCommandTypes)
+        public BusCommandSender(INimbusMessagingFactory messagingFactory, IClock clock, CommandTypesSetting validCommandTypes, IHookProvider hookProvider)
         {
             _messagingFactory = messagingFactory;
             _clock = clock;
+            _hookProvider = hookProvider;
             _validCommandTypes = new HashSet<Type>(validCommandTypes.Value);
         }
 
@@ -50,11 +53,13 @@ namespace Nimbus.Infrastructure.Commands
                         commandType.FullName));
         }
 
-        private static BrokeredMessage ConstructBrokeredMessage<TBusCommand>(TBusCommand busCommand, Type commandType)
+        private BrokeredMessage ConstructBrokeredMessage<TBusCommand>(TBusCommand busCommand, Type commandType)
         {
-            var message = new BrokeredMessage(busCommand);
-            message.Properties[MessagePropertyKeys.MessageType] = commandType.AssemblyQualifiedName;
-            return message;
+            busCommand = _hookProvider.Filters.ApplyToOutgoingBeforeConversion(busCommand);
+            var brokeredMessage = new BrokeredMessage(busCommand);
+            brokeredMessage = _hookProvider.Filters.ApplyToOutgoingAfterConversion(brokeredMessage, busCommand);
+            brokeredMessage.Properties[MessagePropertyKeys.MessageType] = commandType.AssemblyQualifiedName;
+            return brokeredMessage;
         }
 
         private async Task Deliver(Type commandType, BrokeredMessage message)

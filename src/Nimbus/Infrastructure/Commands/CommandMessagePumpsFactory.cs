@@ -6,6 +6,7 @@ using Nimbus.Configuration.Settings;
 using Nimbus.Extensions;
 using Nimbus.HandlerFactories;
 using Nimbus.Handlers;
+using Nimbus.Hooks;
 
 namespace Nimbus.Infrastructure.Commands
 {
@@ -16,6 +17,7 @@ namespace Nimbus.Infrastructure.Commands
         private readonly ICommandHandlerFactory _commandHandlerFactory;
         private readonly INimbusMessagingFactory _messagingFactory;
         private readonly IClock _clock;
+        private readonly IHookProvider _hookProvider;
 
         private readonly GarbageMan _garbageMan = new GarbageMan();
 
@@ -23,13 +25,14 @@ namespace Nimbus.Infrastructure.Commands
                                           CommandHandlerTypesSetting commandHandlerTypes,
                                           ICommandHandlerFactory commandHandlerFactory,
                                           INimbusMessagingFactory messagingFactory,
-                                          IClock clock)
+                                          IClock clock, IHookProvider hookProvider)
         {
             _logger = logger;
             _commandHandlerTypes = commandHandlerTypes;
             _commandHandlerFactory = commandHandlerFactory;
             _messagingFactory = messagingFactory;
             _clock = clock;
+            _hookProvider = hookProvider;
         }
 
         public IEnumerable<IMessagePump> CreateAll()
@@ -49,7 +52,7 @@ namespace Nimbus.Infrastructure.Commands
                 var queuePath = PathFactory.QueuePathFor(commandType);
                 var messageReceiver = _messagingFactory.GetQueueReceiver(queuePath);
 
-                var dispatcher = new CommandMessageDispatcher(_commandHandlerFactory, commandType);
+                var dispatcher = new CommandMessageDispatcher(_commandHandlerFactory, commandType, _hookProvider);
                 _garbageMan.Add(dispatcher);
 
                 var pump = new MessagePump(messageReceiver, dispatcher, _logger, _clock);

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.ServiceBus.Messaging;
 using Nimbus.Configuration.Settings;
 using Nimbus.Extensions;
+using Nimbus.Hooks;
 using Nimbus.MessageContracts;
 using Nimbus.MessageContracts.Exceptions;
 
@@ -14,6 +15,7 @@ namespace Nimbus.Infrastructure.RequestResponse
         private readonly INimbusMessagingFactory _messagingFactory;
         private readonly ReplyQueueNameSetting _replyQueueName;
         private readonly RequestResponseCorrelator _requestResponseCorrelator;
+        private readonly IHookProvider _hookProvider;
         private readonly ILogger _logger;
         private readonly IClock _clock;
         private readonly DefaultTimeoutSetting _responseTimeout;
@@ -26,11 +28,14 @@ namespace Nimbus.Infrastructure.RequestResponse
                                   IClock clock,
                                   DefaultTimeoutSetting responseTimeout,
                                   RequestTypesSetting requestTypes,
-                                  ILogger logger)
+                                  IHookProvider hookProvider,
+                                  ILogger logger
+                                  )
         {
             _messagingFactory = messagingFactory;
             _replyQueueName = replyQueueName;
             _requestResponseCorrelator = requestResponseCorrelator;
+            _hookProvider = hookProvider;
             _logger = logger;
             _clock = clock;
             _responseTimeout = responseTimeout;
@@ -54,13 +59,15 @@ namespace Nimbus.Infrastructure.RequestResponse
 
             var correlationId = Guid.NewGuid();
             var requestTypeName = typeof (TRequest).FullName;
-            var message = new BrokeredMessage(busRequest)
+            busRequest = _hookProvider.Filters.ApplyToOutgoingBeforeConversion(busRequest);
+            var brokeredMessage = new BrokeredMessage(busRequest)
                           {
                               CorrelationId = correlationId.ToString(),
                               ReplyTo = _replyQueueName,
                               TimeToLive = timeout,
                           };
-            message.Properties.Add(MessagePropertyKeys.MessageType, requestTypeName);
+            brokeredMessage = _hookProvider.Filters.ApplyToOutgoingAfterConversion(brokeredMessage, busRequest);
+            brokeredMessage.Properties.Add(MessagePropertyKeys.MessageType, requestTypeName);
 
             var expiresAfter = _clock.UtcNow.Add(timeout);
             var responseCorrelationWrapper = _requestResponseCorrelator.RecordRequest<TResponse>(correlationId, expiresAfter);
@@ -68,7 +75,7 @@ namespace Nimbus.Infrastructure.RequestResponse
             var sender = _messagingFactory.GetQueueSender(PathFactory.QueuePathFor(busRequest.GetType()));
 
             _logger.Debug("Sending request message {0} of type {1}", correlationId, requestTypeName);
-            await sender.Send(message);
+            await sender.Send(brokeredMessage);
             _logger.Debug("Sent request message {0} of type {1}", correlationId, requestTypeName);
 
             _logger.Debug("Waiting for response to request {0} of type {1}", correlationId, requestTypeName);

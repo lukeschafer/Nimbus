@@ -56,6 +56,14 @@
     <Compile Include="BackwardCompatibilityAdaptorExtensions.cs" />
     <Compile Include="BatchSendingExtensions.cs" />
     <Compile Include="DelayedSendingExtensions.cs" />
+    <Compile Include="Extensions\HookExtensions.cs" />
+    <Compile Include="Hooks\FilterHooks.cs" />
+    <Compile Include="Hooks\HookProvider.cs" />
+    <Compile Include="Hooks\IFilter.cs" />
+    <Compile Include="Hooks\IFilterIncomingMessages.cs" />
+    <Compile Include="Hooks\IFilterIncomingMessagesOf.cs" />
+    <Compile Include="Hooks\IFilterOutgoingMessages.cs" />
+    <Compile Include="Hooks\IFilterOutgoingMessagesOf.cs" />
     <Compile Include="Infrastructure\Events\CompetingEventMessagePumpsFactory.cs" />
     <Compile Include="Configuration\GarbageMan.cs" />
     <Compile Include="Configuration\ICreateComponents.cs" />

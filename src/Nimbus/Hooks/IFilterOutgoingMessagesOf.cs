@@ -2,9 +2,9 @@
 
 namespace Nimbus.Hooks
 {
-    public interface IFilterOutgoingMessagesOf<T>
+    public interface IFilterOutgoingMessagesOf<T> : IFilter
     {
-        T FilterOut(T message);
+        T PreFilterOut(T message);
         BrokeredMessage FilterOut(BrokeredMessage brokeredMessage, T originalMessage);
     }
 }

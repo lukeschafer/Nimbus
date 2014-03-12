@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.ServiceBus.Messaging;
 using Nimbus.Extensions;
 using Nimbus.HandlerFactories;
+using Nimbus.Hooks;
 using Nimbus.MessageContracts;
 
 namespace Nimbus.Infrastructure.RequestResponse
@@ -15,18 +16,21 @@ namespace Nimbus.Infrastructure.RequestResponse
         private readonly Type _messageType;
         private readonly IRequestHandlerFactory _requestHandlerFactory;
         private readonly IClock _clock;
+        private readonly IHookProvider _hookProvider;
 
-        public RequestMessageDispatcher(INimbusMessagingFactory messagingFactory, Type messageType, IRequestHandlerFactory requestHandlerFactory, IClock clock)
+        public RequestMessageDispatcher(INimbusMessagingFactory messagingFactory, Type messageType, IRequestHandlerFactory requestHandlerFactory, IClock clock, IHookProvider hookProvider)
         {
             _messagingFactory = messagingFactory;
             _messageType = messageType;
             _requestHandlerFactory = requestHandlerFactory;
             _clock = clock;
+            _hookProvider = hookProvider;
         }
 
         public async Task Dispatch(BrokeredMessage message)
         {
             var request = message.GetBody(_messageType);
+            request = _hookProvider.Filters.ApplyToIncoming(message, request);
             var dispatchMethod = GetGenericDispatchMethodFor(request);
             await (Task) dispatchMethod.Invoke(this, new[] {request, message});
         }

@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Nimbus.Configuration.Settings;
 using Nimbus.HandlerFactories;
+using Nimbus.Hooks;
 using Nimbus.Infrastructure;
 
 namespace Nimbus.Configuration
@@ -123,6 +124,12 @@ namespace Nimbus.Configuration
                                                                Func<BusDebuggingConfiguration, BusDebuggingConfiguration> debugConfiguration)
         {
             debugConfiguration(configuration.Debugging);
+            return configuration;
+        }
+
+        public static BusBuilderConfiguration WithFilters(this BusBuilderConfiguration configuration, Action<IFilterHooks> builder)
+        {
+            builder(configuration.Hooks.Filters);
             return configuration;
         }
     }

@@ -6,6 +6,7 @@ using Nimbus.Configuration.Settings;
 using Nimbus.Extensions;
 using Nimbus.HandlerFactories;
 using Nimbus.Handlers;
+using Nimbus.Hooks;
 using Nimbus.Infrastructure.MessageSendersAndReceivers;
 
 namespace Nimbus.Infrastructure.Events
@@ -19,6 +20,7 @@ namespace Nimbus.Infrastructure.Events
         private readonly ILogger _logger;
         private readonly IMulticastEventHandlerFactory _multicastEventHandlerFactory;
         private readonly IClock _clock;
+        private readonly IHookProvider _hookProvider;
 
         private readonly GarbageMan _garbageMan = new GarbageMan();
 
@@ -28,7 +30,8 @@ namespace Nimbus.Infrastructure.Events
                                                    MulticastEventHandlerTypesSetting multicastEventHandlerTypes,
                                                    ILogger logger,
                                                    IMulticastEventHandlerFactory multicastEventHandlerFactory,
-                                                   IClock clock)
+                                                   IClock clock,
+                                                   IHookProvider hookProvider)
         {
             _queueManager = queueManager;
             _applicationName = applicationName;
@@ -37,6 +40,7 @@ namespace Nimbus.Infrastructure.Events
             _logger = logger;
             _multicastEventHandlerFactory = multicastEventHandlerFactory;
             _clock = clock;
+            _hookProvider = hookProvider;
         }
 
         public IEnumerable<IMessagePump> CreateAll()
@@ -59,7 +63,7 @@ namespace Nimbus.Infrastructure.Events
                 var receiver = new NimbusSubscriptionMessageReceiver(_queueManager, topicPath, subscriptionName);
                 _garbageMan.Add(receiver);
 
-                var dispatcher = new MulticastEventMessageDispatcher(_multicastEventHandlerFactory, eventType);
+                var dispatcher = new MulticastEventMessageDispatcher(_multicastEventHandlerFactory, eventType, _hookProvider);
                 _garbageMan.Add(dispatcher);
 
                 var pump = new MessagePump(receiver, dispatcher, _logger, _clock);

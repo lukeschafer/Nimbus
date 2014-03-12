@@ -6,6 +6,7 @@ using Nimbus.Configuration.Settings;
 using Nimbus.Extensions;
 using Nimbus.HandlerFactories;
 using Nimbus.Handlers;
+using Nimbus.Hooks;
 using Nimbus.Infrastructure.MessageSendersAndReceivers;
 
 namespace Nimbus.Infrastructure.RequestResponse
@@ -19,6 +20,7 @@ namespace Nimbus.Infrastructure.RequestResponse
         private readonly IMulticastRequestHandlerFactory _multicastRequestHandlerFactory;
         private readonly INimbusMessagingFactory _messagingFactory;
         private readonly IClock _clock;
+        private readonly IHookProvider _hookProvider;
 
         private readonly GarbageMan _garbageMan = new GarbageMan();
 
@@ -28,7 +30,8 @@ namespace Nimbus.Infrastructure.RequestResponse
                                                    IQueueManager queueManager,
                                                    IMulticastRequestHandlerFactory multicastRequestHandlerFactory,
                                                    INimbusMessagingFactory messagingFactory,
-                                                   IClock clock)
+                                                   IClock clock,
+                                                   IHookProvider hookProvider)
         {
             _logger = logger;
             _requestHandlerTypes = requestHandlerTypes;
@@ -37,6 +40,7 @@ namespace Nimbus.Infrastructure.RequestResponse
             _multicastRequestHandlerFactory = multicastRequestHandlerFactory;
             _messagingFactory = messagingFactory;
             _clock = clock;
+            _hookProvider = hookProvider;
         }
 
         public IEnumerable<IMessagePump> CreateAll()
@@ -59,7 +63,7 @@ namespace Nimbus.Infrastructure.RequestResponse
                 var messageReceiver = new NimbusSubscriptionMessageReceiver(_queueManager, topicPath, applicationSharedSubscriptionName);
                 _garbageMan.Add(messageReceiver);
 
-                var dispatcher = new MulticastRequestMessageDispatcher(_messagingFactory, _multicastRequestHandlerFactory, requestType);
+                var dispatcher = new MulticastRequestMessageDispatcher(_messagingFactory, _multicastRequestHandlerFactory, requestType, _hookProvider);
                 _garbageMan.Add(dispatcher);
 
                 var pump = new MessagePump(messageReceiver, dispatcher, _logger, _clock);

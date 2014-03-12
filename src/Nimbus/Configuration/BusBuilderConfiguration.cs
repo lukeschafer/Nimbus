@@ -2,6 +2,7 @@
 using Nimbus.Configuration.Settings;
 using Nimbus.Exceptions;
 using Nimbus.HandlerFactories;
+using Nimbus.Hooks;
 using Nimbus.Logger;
 
 namespace Nimbus.Configuration
@@ -16,6 +17,7 @@ namespace Nimbus.Configuration
         internal IMulticastRequestHandlerFactory MulticastRequestHandlerFactory { get; set; }
         internal IMulticastEventHandlerFactory MulticastEventHandlerFactory { get; set; }
         internal ICompetingEventHandlerFactory CompetingEventHandlerFactory { get; set; }
+        internal IHookProvider Hooks { get; set; }
 
         internal CommandHandlerTypesSetting CommandHandlerTypes { get; set; }
         internal CommandTypesSetting CommandTypes { get; set; }
@@ -34,7 +36,7 @@ namespace Nimbus.Configuration
             DefaultTimeout = new DefaultTimeoutSetting {Value = TimeSpan.FromSeconds(10)}; //FIXME refactor these to override the Default property on their setting class
             MaxDeliveryAttempts = new MaxDeliveryAttemptSetting {Value = 5};
             Logger = new NullLogger();
-
+            Hooks = new HookProvider();
             Debugging = new BusDebuggingConfiguration();
         }
 

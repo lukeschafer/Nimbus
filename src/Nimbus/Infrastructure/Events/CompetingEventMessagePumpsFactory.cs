@@ -6,6 +6,7 @@ using Nimbus.Configuration.Settings;
 using Nimbus.Extensions;
 using Nimbus.HandlerFactories;
 using Nimbus.Handlers;
+using Nimbus.Hooks;
 
 namespace Nimbus.Infrastructure.Events
 {
@@ -17,6 +18,7 @@ namespace Nimbus.Infrastructure.Events
         private readonly ILogger _logger;
         private readonly INimbusMessagingFactory _messagingFactory;
         private readonly IClock _clock;
+        private readonly IHookProvider _hookProvider;
 
         private readonly GarbageMan _garbageMan = new GarbageMan();
 
@@ -25,7 +27,8 @@ namespace Nimbus.Infrastructure.Events
                                                  ICompetingEventHandlerFactory competingEventHandlerFactory,
                                                  ILogger logger,
                                                  INimbusMessagingFactory messagingFactory,
-                                                 IClock clock)
+                                                 IClock clock,
+                                                 IHookProvider hookProvider)
         {
             _applicationName = applicationName;
             _competingEventHandlerTypes = competingEventHandlerTypes;
@@ -33,6 +36,7 @@ namespace Nimbus.Infrastructure.Events
             _logger = logger;
             _messagingFactory = messagingFactory;
             _clock = clock;
+            _hookProvider = hookProvider;
         }
 
         public IEnumerable<IMessagePump> CreateAll()
@@ -53,7 +57,7 @@ namespace Nimbus.Infrastructure.Events
                 var subscriptionName = String.Format("{0}", _applicationName);
                 var receiver = _messagingFactory.GetTopicReceiver(topicPath, subscriptionName);
 
-                var dispatcher = new CompetingEventMessageDispatcher(_competingEventHandlerFactory, eventType);
+                var dispatcher = new CompetingEventMessageDispatcher(_competingEventHandlerFactory, eventType, _hookProvider);
                 _garbageMan.Add(dispatcher);
 
                 var pump = new MessagePump(receiver, dispatcher, _logger, _clock);
