@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.ServiceBus.Messaging;
 
@@ -9,8 +10,9 @@ namespace Nimbus.Infrastructure.MessageSendersAndReceivers
         private readonly IQueueManager _queueManager;
         private readonly string _queuePath;
 
-        private MessageReceiver _messageReceiver;
         private readonly object _mutex = new object();
+        private QueueClient _queueClient;
+        private CancellationTokenSource _messagePumpCancellation;
 
         public NimbusQueueMessageReceiver(IQueueManager queueManager, string queuePath)
         {
@@ -22,15 +24,10 @@ namespace Nimbus.Infrastructure.MessageSendersAndReceivers
         {
             lock (_mutex)
             {
-                if (_messageReceiver != null) throw new InvalidOperationException("Already started!");
+                if (_queueClient != null) throw new InvalidOperationException("Already started!");
 
-                _messageReceiver = _queueManager.CreateMessageReceiver(_queuePath);
-                _messageReceiver.OnMessageAsync(callback,
-                                                new OnMessageOptions
-                                                {
-                                                    AutoComplete = false,
-                                                    MaxConcurrentCalls = Environment.ProcessorCount,
-                                                });
+                _queueClient = _queueManager.CreateQueueClient(_queuePath);
+                _messagePumpCancellation = _queueClient.CreateMessagePumps(Environment.ProcessorCount, callback);
             }
         }
 
@@ -38,11 +35,12 @@ namespace Nimbus.Infrastructure.MessageSendersAndReceivers
         {
             lock (_mutex)
             {
-                var messageReceiver = _messageReceiver;
-                if (messageReceiver == null) return;
+                var queueClient = _queueClient;
+                if (queueClient == null) return;
 
-                messageReceiver.Close();
-                _messageReceiver = null;
+                queueClient.Close();
+                _messagePumpCancellation.Cancel();
+                _queueClient = null;
             }
         }
 

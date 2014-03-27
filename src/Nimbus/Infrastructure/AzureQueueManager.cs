@@ -77,6 +77,12 @@ namespace Nimbus.Infrastructure
             return _messagingFactory().CreateQueueClient(queueName);
         }
 
+        public QueueClient CreateQueueClient(string queueName)
+        {
+            EnsureQueueExists(queueName);
+            return _messagingFactory().CreateQueueClient(queueName);
+        }
+
         private ConcurrentBag<string> FetchExistingTopics()
         {
             _logger.Debug("Fetching existing topics...");

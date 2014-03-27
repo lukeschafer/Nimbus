@@ -11,5 +11,6 @@ namespace Nimbus.Infrastructure
         SubscriptionClient CreateSubscriptionReceiver(string topicPath, string subscriptionName);
 
         QueueClient CreateDeadLetterQueueClient<T>();
+        QueueClient CreateQueueClient(string queuePath);
     }
 }

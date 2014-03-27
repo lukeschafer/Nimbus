@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.ServiceBus.Messaging;
 using Nimbus.Extensions;
@@ -13,6 +14,7 @@ namespace Nimbus.Infrastructure.MessageSendersAndReceivers
 
         private SubscriptionClient _subscriptionClient;
         private readonly object _mutex = new object();
+        private CancellationTokenSource _messagePumpCancellation;
 
         public NimbusSubscriptionMessageReceiver(IQueueManager queueManager, string topicPath, string subscriptionName)
         {
@@ -27,15 +29,10 @@ namespace Nimbus.Infrastructure.MessageSendersAndReceivers
             {
                 if (_subscriptionClient != null) throw new InvalidOperationException("Already started!");
                 _subscriptionClient = _queueManager.CreateSubscriptionReceiver(_topicPath, _subscriptionName);
-
-                _subscriptionClient.OnMessageAsync(callback,
-                                                   new OnMessageOptions
-                                                   {
-                                                       AutoComplete = false,
-                                                       MaxConcurrentCalls = Environment.ProcessorCount,
-                                                   });
+                _messagePumpCancellation = _subscriptionClient.CreateMessagePumps(Environment.ProcessorCount, callback);
             }
         }
+
 
         public void Stop()
         {
@@ -45,6 +42,7 @@ namespace Nimbus.Infrastructure.MessageSendersAndReceivers
                 if (subscriptionClient == null) return;
 
                 subscriptionClient.Close();
+                _messagePumpCancellation.Cancel();
                 _subscriptionClient = null;
             }
         }

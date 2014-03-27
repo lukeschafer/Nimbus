@@ -64,6 +64,7 @@
     <Compile Include="Hooks\IFilterIncomingMessagesOf.cs" />
     <Compile Include="Hooks\IFilterOutgoingMessages.cs" />
     <Compile Include="Hooks\IFilterOutgoingMessagesOf.cs" />
+    <Compile Include="Infrastructure\AzureExtensions.cs" />
     <Compile Include="Infrastructure\Events\CompetingEventMessagePumpsFactory.cs" />
     <Compile Include="Configuration\GarbageMan.cs" />
     <Compile Include="Configuration\ICreateComponents.cs" />
