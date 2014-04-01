@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -36,8 +37,9 @@ using System.Runtime.InteropServices;
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("1.999.3.0")]
+[assembly: AssemblyFileVersion("1.999.3.0")]
+[assembly: AssemblyInformationalVersion("1.999.3.0")]
 [assembly: InternalsVisibleTo("Nimbus.UnitTests", AllInternalsVisible = true)]
 [assembly: InternalsVisibleTo("Nimbus.IntegrationTests", AllInternalsVisible = true)]
 [assembly: InternalsVisibleTo("DynamicProxyGenAssembly2", AllInternalsVisible = true)]

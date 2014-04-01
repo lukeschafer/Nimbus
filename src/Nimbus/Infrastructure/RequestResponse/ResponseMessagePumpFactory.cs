@@ -30,7 +30,7 @@ namespace Nimbus.Infrastructure.RequestResponse
 
         public IMessagePump Create()
         {
-            var receiver = new NimbusQueueMessageReceiver(_queueManager, _replyQueueName);
+            var receiver = new NimbusQueueMessageReceiver(_queueManager, _replyQueueName, _logger);
             _garbageMan.Add(receiver);
 
             var pump = new MessagePump(receiver, _dispatcher, _logger, _clock);

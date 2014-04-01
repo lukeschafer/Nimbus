@@ -9,15 +9,17 @@ namespace Nimbus.Infrastructure.MessageSendersAndReceivers
     {
         private readonly IQueueManager _queueManager;
         private readonly string _queuePath;
+        private readonly ILogger _logger;
 
         private readonly object _mutex = new object();
         private QueueClient _queueClient;
         private CancellationTokenSource _messagePumpCancellation;
 
-        public NimbusQueueMessageReceiver(IQueueManager queueManager, string queuePath)
+        public NimbusQueueMessageReceiver(IQueueManager queueManager, string queuePath, ILogger logger)
         {
             _queueManager = queueManager;
             _queuePath = queuePath;
+            _logger = logger;
         }
 
         public void Start(Func<BrokeredMessage, Task> callback)
@@ -27,7 +29,7 @@ namespace Nimbus.Infrastructure.MessageSendersAndReceivers
                 if (_queueClient != null) throw new InvalidOperationException("Already started!");
 
                 _queueClient = _queueManager.CreateQueueClient(_queuePath);
-                _messagePumpCancellation = _queueClient.CreateMessagePumps(Environment.ProcessorCount, callback);
+                _messagePumpCancellation = _queueClient.CreateMessagePumps(Environment.ProcessorCount, callback, _logger);
             }
         }
 

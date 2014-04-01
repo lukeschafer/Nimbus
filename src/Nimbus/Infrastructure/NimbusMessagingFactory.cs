@@ -9,6 +9,7 @@ namespace Nimbus.Infrastructure
     internal class NimbusMessagingFactory : INimbusMessagingFactory, ICreateComponents
     {
         private readonly IQueueManager _queueManager;
+        private readonly ILogger _logger;
 
         private readonly ConcurrentDictionary<string, INimbusMessageSender> _queueMessageSenders = new ConcurrentDictionary<string, INimbusMessageSender>();
         private readonly ConcurrentDictionary<string, INimbusMessageReceiver> _queueMessageReceivers = new ConcurrentDictionary<string, INimbusMessageReceiver>();
@@ -16,9 +17,10 @@ namespace Nimbus.Infrastructure
         private readonly ConcurrentDictionary<string, INimbusMessageReceiver> _topicMessageReceivers = new ConcurrentDictionary<string, INimbusMessageReceiver>();
         private readonly GarbageMan _garbageMan = new GarbageMan();
 
-        public NimbusMessagingFactory(IQueueManager queueManager)
+        public NimbusMessagingFactory(IQueueManager queueManager, ILogger logger)
         {
             _queueManager = queueManager;
+            _logger = logger;
         }
 
         public INimbusMessageSender GetQueueSender(string queuePath)
@@ -51,7 +53,7 @@ namespace Nimbus.Infrastructure
 
         private INimbusMessageReceiver CreateQueueReceiver(string queuePath)
         {
-            var receiver = new NimbusQueueMessageReceiver(_queueManager, queuePath);
+            var receiver = new NimbusQueueMessageReceiver(_queueManager, queuePath, _logger);
             _garbageMan.Add(receiver);
             return receiver;
         }
@@ -65,7 +67,7 @@ namespace Nimbus.Infrastructure
 
         private INimbusMessageReceiver CreateTopicReceiver(string topicPath, string subscriptionName)
         {
-            var receiver = new NimbusSubscriptionMessageReceiver(_queueManager, topicPath, subscriptionName);
+            var receiver = new NimbusSubscriptionMessageReceiver(_queueManager, topicPath, subscriptionName, _logger);
             _garbageMan.Add(receiver);
             return receiver;
         }

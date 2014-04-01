@@ -60,7 +60,7 @@ namespace Nimbus.Infrastructure.Events
 
                 var topicPath = PathFactory.TopicPathFor(eventType);
                 var subscriptionName = String.Format("{0}.{1}", _applicationName, _instanceName);
-                var receiver = new NimbusSubscriptionMessageReceiver(_queueManager, topicPath, subscriptionName);
+                var receiver = new NimbusSubscriptionMessageReceiver(_queueManager, topicPath, subscriptionName, _logger);
                 _garbageMan.Add(receiver);
 
                 var dispatcher = new MulticastEventMessageDispatcher(_multicastEventHandlerFactory, eventType, _hookProvider);
