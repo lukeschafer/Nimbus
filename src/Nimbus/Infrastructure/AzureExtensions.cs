@@ -7,59 +7,66 @@ namespace Nimbus.Infrastructure
 {
     public static class AzureExtensions
     {
-        public static CancellationTokenSource CreateMessagePumps(this SubscriptionClient client, int count, Func<BrokeredMessage, Task> doAction, ILogger logger)
+        public static void CreateMessagePumps(this SubscriptionClient client, int count, Func<BrokeredMessage, Task> doAction, ILogger logger)
         {
-            var cancellation = new CancellationTokenSource();
-            var taskFactory = new TaskFactory();
             for (var i = 0; i < count; i++)
-                taskFactory.StartNew(() =>
+            {
+                var t = new Task(() =>
                 {
-                    try
+                    logger.Debug("Starting Subscription Message Pump Thread: {0}", Thread.CurrentThread.ManagedThreadId);
+                    while (true)
                     {
-                        logger.Debug("Starting Subscription Message Pump Thread: {0}", Thread.CurrentThread.ManagedThreadId);
-                        while (Thread.CurrentThread.IsAlive)
+                        try
                         {
                             var msg = client.Receive(TimeSpan.FromSeconds(10));
-                            if (msg != null)
-                            {
-                                logger.Debug("Got Subscription Message");
-                                doAction(msg).Wait(cancellation.Token);
-                            }
+                            if (msg == null) continue;
+                            logger.Debug("Got Subscription Message");
+                            doAction(msg).Wait();
+                        }
+                        catch (Exception e)
+                        {
+                            logger.Error(e, "Issue in Subscription Message Pump! Thread: {0}", Thread.CurrentThread.ManagedThreadId);
                         }
                     }
-                    catch (Exception e)
-                    {
-                        logger.Error(e, "Fatal issue in Subscription Message Pump! This has caused at least one pump thread to die! Thread: {0}", Thread.CurrentThread.ManagedThreadId);
-                    }
-                }, cancellation.Token);
-            return cancellation;
+                });
+                t.ContinueWith((thr, o) =>
+                {
+                    if (thr.Exception != null) logger.Error(thr.Exception, "Fatal Issue in Subscription Message Pump Thread: {0}", Thread.CurrentThread.ManagedThreadId);
+                }, new object());
+                t.Start();
+            }
         }
 
-        public static CancellationTokenSource CreateMessagePumps(this QueueClient client, int count, Func<BrokeredMessage, Task> doAction, ILogger logger)
+        public static void CreateMessagePumps(this QueueClient client, int count, Func<BrokeredMessage, Task> doAction, ILogger logger)
         {
-            var cancellation = new CancellationTokenSource();
-            var taskFactory = new TaskFactory();
             for (var i = 0; i < count; i++)
-                taskFactory.StartNew(() =>
+            {
+                var t = new Task(() =>
                 {
-                    try
+                    logger.Debug("Starting Queue Message Pump Thread: {0}", Thread.CurrentThread.ManagedThreadId);
+                    while (true)
                     {
-                        logger.Debug("Starting Queue Message Pump Thread: {0}", Thread.CurrentThread.ManagedThreadId);
-                        while (Thread.CurrentThread.IsAlive)
+                        try
                         {
                             var msg = client.Receive(TimeSpan.FromSeconds(10));
-                            {
-                                logger.Debug("Got Queue Message");
-                                doAction(msg).Wait(cancellation.Token);
-                            }
+                            if (msg == null) continue;
+                            logger.Debug("Got Queue Message");
+                            doAction(msg).Wait();
+                        }
+                        catch (Exception e)
+                        {
+                            logger.Error(e, "Issue in Queue Message Pump! Thread: {0}",
+                                Thread.CurrentThread.ManagedThreadId);
                         }
                     }
-                    catch (Exception e)
-                    {
-                        logger.Error(e, "Fatal issue in Queue Message Pump! This has caused at least one pump thread to die! Thread: {0}", Thread.CurrentThread.ManagedThreadId);
-                    }
-                }, cancellation.Token);
-            return cancellation;
+                });
+
+                t.ContinueWith((thr, o) =>
+                {
+                    if (thr.Exception != null) logger.Error(thr.Exception, "Fatal Issue in Queue Message Pump Thread: {0}", Thread.CurrentThread.ManagedThreadId);
+                }, new object());
+                t.Start();
+            }
         }
     }
 }
